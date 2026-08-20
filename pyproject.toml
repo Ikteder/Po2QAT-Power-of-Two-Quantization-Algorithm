@@ -1,0 +1,37 @@
+[build-system]
+requires = ["setuptools>=69", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "po2qat-student-lab"
+version = "1.0.0"
+description = "Reproducible Power-of-Two quantization-aware-training labs for a CNN, ViT, and tiny GPT."
+readme = "README.md"
+requires-python = ">=3.10,<3.15"
+license = {text = "MIT"}
+authors = [{name = "Po2QAT Student Lab contributors"}]
+dependencies = [
+  "numpy>=1.26,<3",
+  "torch>=2.3,<3",
+  "torchvision>=0.18,<1",
+]
+
+[project.optional-dependencies]
+dev = ["pytest>=8,<10", "ruff>=0.9,<1"]
+
+[project.scripts]
+po2qat = "po2qat.cli:main"
+
+[tool.setuptools]
+package-dir = {"" = "src"}
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-q"
+
+[tool.ruff]
+line-length = 120
+target-version = "py310"

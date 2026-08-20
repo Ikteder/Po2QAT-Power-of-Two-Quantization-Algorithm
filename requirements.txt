@@ -1,0 +1,7 @@
+# Install with: python -m pip install -r requirements.txt
+# Version ranges intentionally support CPU, CUDA, and Apple Silicon builds.
+numpy>=1.26,<3
+torch>=2.3,<3
+torchvision>=0.18,<1
+pytest>=8,<10
+

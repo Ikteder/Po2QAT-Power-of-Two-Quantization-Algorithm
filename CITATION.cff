@@ -1,0 +1,13 @@
+cff-version: 1.2.0
+message: "If you use this teaching repository, cite the repository and the primary PoT-QAT papers listed in the README."
+title: "Po2QAT: Power of Two Quantization Algorithm"
+type: software
+version: 1.0.0
+date-released: 2026-08-19
+license: MIT
+repository-code: "https://github.com/Ikteder/Po2QAT-Power-of-Two-Quantization-Algorithm"
+keywords:
+  - quantization-aware training
+  - power-of-two quantization
+  - PyTorch
+  - education
