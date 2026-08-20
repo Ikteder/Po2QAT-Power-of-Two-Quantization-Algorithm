@@ -111,6 +111,11 @@ def _train_classification(
         history.append(
             {"phase": phase, "step_or_epoch": epoch, "train_loss": running / seen, "val_loss": val_loss, "val_metric": val_accuracy}
         )
+        print(
+            f"  [{phase}] epoch {epoch}/{epochs} "
+            f"train_loss={running / seen:.4f} val_loss={val_loss:.4f} val_accuracy={val_accuracy:.2%}",
+            flush=True,
+        )
 
 
 def _train_language(
@@ -147,6 +152,7 @@ def _train_language(
                     "val_metric": "",
                 }
             )
+            print(f"  [{phase}] step {step}/{steps} train_loss={float(loss.detach()):.4f}", flush=True)
 
 
 def run_experiment(config: ExperimentConfig) -> Path:

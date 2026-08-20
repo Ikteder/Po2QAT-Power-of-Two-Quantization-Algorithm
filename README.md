@@ -24,8 +24,9 @@ Each run saves the weights immediately before QAT, the floating-point master wei
 po2qat-student-lab/
 ├── src/po2qat/             algorithm, models, datasets, runner, and CLI
 ├── tests/                  unit and export tests
+├── notebooks/              Jupyter/Colab results lab
 ├── scripts/                Windows and macOS/Linux setup helpers
-├── docs/                   algorithm notes, teaching guide, dataset/model cards
+├── docs/                   algorithm notes, assignment, dataset/model cards
 ├── .github/workflows/      Windows, macOS, and Linux test matrix
 ├── pyproject.toml
 └── README.md
@@ -77,7 +78,43 @@ macOS:
 python -m pytest
 ```
 
-## 4. Run the no-download smoke experiment
+## 4. Choose a model with the interactive launcher
+
+The easiest way to start is to run Po2QAT without arguments. It will ask whether you want the CNN, ViT, or small LLM, followed by the experiment profile.
+
+Windows:
+
+```powershell
+.venv\Scripts\python.exe -m po2qat
+```
+
+macOS:
+
+```bash
+python -m po2qat
+```
+
+Example:
+
+```text
+Po2QAT interactive launcher
+Choose the model you want to run:
+  1. CNN — MobileNetTiny image classifier
+  2. ViT — Tiny Vision Transformer
+  3. LLM — TinyGPT character language model
+Model [1/2/3]: 1
+
+Choose an experiment profile:
+  1. smoke  — no download; checks that the pipeline works
+  2. quick  — short real-data classroom run (default)
+  3. strong — measured higher-quality reference schedule
+  4. full   — longest run using all available training data
+Profile [1/2/3/4, default 2]: 3
+```
+
+The program prints progress during baseline training and Po2QAT, shows a concise final comparison, then saves every detailed metric and weight artifact under `runs/<model>/`.
+
+## 5. Run the no-download smoke experiment
 
 This proves that all three pipelines work. It uses deterministic synthetic data, only two baseline updates for TinyGPT, and one short epoch for each vision model. The outputs are structural checks, **not meaningful model quality results**.
 
@@ -93,7 +130,7 @@ macOS:
 python -m po2qat run --model all --profile smoke --device cpu
 ```
 
-## 5. Reproduce the classroom experiments
+## 6. Reproduce the classroom experiments
 
 The `quick` profile downloads CIFAR-10 and Tiny Shakespeare the first time. It uses a fixed CIFAR-10 subset and a fixed seed so it is suitable for a lab period.
 
@@ -111,6 +148,14 @@ python -m po2qat run --model all --profile strong --device cpu
 
 On the reference Windows CPU, the three strong runs took approximately 4.6, 4.9, and 5.2 minutes respectively. See the [measured results](docs/experiments/2026-08-19-real-data-strong-results.md).
 
+### Measured reference charts
+
+These charts summarize the documented, single-seed strong-profile run. They are reproducibility targets, not guaranteed scores: hardware, package versions, and stochastic training can change the result.
+
+![Strong-profile CNN and TinyViT accuracy comparison](docs/assets/strong-vision-accuracy.svg)
+
+![Strong-profile TinyGPT perplexity and token-accuracy comparison](docs/assets/strong-llm-results.svg)
+
 On Windows, replace `python` with `.venv\Scripts\python.exe`. On macOS, run these commands after activating the environment.
 
 For a longer experiment using all available training data:
@@ -121,7 +166,20 @@ python -m po2qat run --model all --profile full
 
 The full profile is intentionally longer. A CPU-only computer may take hours for all three models. You can stop after any individual model; its completed artifacts remain in `runs/`.
 
-## 6. Inspect the weights
+## 7. Plot and analyze the run
+
+[![Open the results lab in Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/Ikteder/Po2QAT-Power-of-Two-Quantization-Algorithm/blob/main/notebooks/po2qat_results_lab.ipynb)
+
+The [results notebook](notebooks/po2qat_results_lab.ipynb) can run an experiment and plot initial-versus-Po2 task metrics, training loss, classifier confusion matrices, and all three weight distributions. In Colab, open the badge and run the cells from top to bottom. For local Jupyter:
+
+```text
+python -m pip install -e ".[notebook]"
+python -m jupyter lab notebooks/po2qat_results_lab.ipynb
+```
+
+Choose `MODEL = "cnn"`, `"vit"`, or `"llm"` in section 2 of the notebook. Start with `PROFILE = "quick"`; use `strong` only when you have the documented time budget.
+
+## 8. Inspect the weights
 
 Every model writes to `runs/<model>/`:
 
@@ -241,13 +299,9 @@ The forward value is Po2, while the derivative with respect to `fp_weight` is on
 
 **Windows creates DataLoader errors** — leave `--workers 0` (the default).
 
-## Suggested assignment
+## Student assignment
 
-1. Run the smoke profile and verify that all exported quantized tensors say `exact_po2=True`.
-2. Run one model with the quick profile and report the initial FP32 and final Po2 metric.
-3. Plot or summarize `mae_master_to_po2` by layer.
-4. Repeat with `--bits 3` and `--bits 5`.
-5. Explain the accuracy/perplexity versus codebook-size tradeoff and identify at least one limitation of the experiment.
+Use the [Po2QAT assignment worksheet](docs/assignments/PO2QAT_ASSIGNMENT.md) for the full procedure, ten analysis questions, submission checklist, and 40-point grading rubric.
 
 See [docs/INSTRUCTOR_GUIDE.md](docs/INSTRUCTOR_GUIDE.md) for grading prompts and [docs/experiments/EXPERIMENT_TEMPLATE.md](docs/experiments/EXPERIMENT_TEMPLATE.md) for a report template.
 

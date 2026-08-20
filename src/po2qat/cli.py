@@ -9,6 +9,27 @@ from .artifacts import read_summary
 from .experiment import ExperimentConfig, run_experiment
 
 
+MODEL_CHOICES = {
+    "1": "cnn",
+    "2": "vit",
+    "3": "llm",
+    "cnn": "cnn",
+    "vit": "vit",
+    "llm": "llm",
+}
+
+PROFILE_CHOICES = {
+    "1": "smoke",
+    "2": "quick",
+    "3": "strong",
+    "4": "full",
+    "smoke": "smoke",
+    "quick": "quick",
+    "strong": "strong",
+    "full": "full",
+}
+
+
 def _parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         prog="po2qat",
@@ -36,8 +57,39 @@ def _parser() -> argparse.ArgumentParser:
     return parser
 
 
+def _ask_choice(prompt: str, choices: dict[str, str], input_fn=input, default: str | None = None) -> str:
+    while True:
+        answer = input_fn(prompt).strip().lower()
+        if not answer and default is not None:
+            return default
+        if answer in choices:
+            return choices[answer]
+        print("Please enter one of the listed numbers or names.", flush=True)
+
+
+def interactive_argv(input_fn=input) -> list[str]:
+    print("\nPo2QAT interactive launcher", flush=True)
+    print("Choose the model you want to run:", flush=True)
+    print("  1. CNN - MobileNetTiny image classifier", flush=True)
+    print("  2. ViT - Tiny Vision Transformer", flush=True)
+    print("  3. LLM - TinyGPT character language model", flush=True)
+    model = _ask_choice("Model [1/2/3]: ", MODEL_CHOICES, input_fn=input_fn)
+
+    print("\nChoose an experiment profile:", flush=True)
+    print("  1. smoke  - no download; checks that the pipeline works", flush=True)
+    print("  2. quick  - short real-data classroom run (default)", flush=True)
+    print("  3. strong - measured higher-quality reference schedule", flush=True)
+    print("  4. full   - longest run using all available training data", flush=True)
+    profile = _ask_choice("Profile [1/2/3/4, default 2]: ", PROFILE_CHOICES, input_fn=input_fn, default="quick")
+    print(f"\nStarting {model} with the {profile} profile...", flush=True)
+    return ["run", "--model", model, "--profile", profile]
+
+
 def main(argv: list[str] | None = None) -> None:
-    args = _parser().parse_args(argv)
+    supplied = sys.argv[1:] if argv is None else argv
+    if not supplied:
+        supplied = interactive_argv()
+    args = _parser().parse_args(supplied)
     if args.command == "inspect":
         print(read_summary(args.run_dir))
         return

@@ -244,8 +244,38 @@ def export_run(
 
 def read_summary(run_dir: Path) -> str:
     metrics = json.loads((run_dir / "metrics.json").read_text(encoding="utf-8"))
-    lines = [f"Run: {run_dir}"]
-    for key, value in metrics.items():
-        lines.append(f"  {key}: {value}")
-    lines.append(f"  weights: {run_dir / 'weight_comparison.csv'}")
+    lines = [f"Run complete: {run_dir}"]
+    lines.append(f"  Model/data: {metrics.get('model')} / {metrics.get('dataset')}")
+    lines.append(f"  Device: {metrics.get('device')} | Parameters: {metrics.get('parameters'):,}")
+    if "initial_fp32_accuracy" in metrics:
+        lines.append(
+            "  Accuracy: "
+            f"initial={metrics['initial_fp32_accuracy']:.2%} -> Po2={metrics['po2_quantized_accuracy']:.2%}"
+        )
+        lines.append(
+            "  Loss: "
+            f"initial={metrics['initial_fp32_loss']:.4f} -> Po2={metrics['po2_quantized_loss']:.4f}"
+        )
+        lines.append(
+            "  Macro F1: "
+            f"initial={metrics['initial_fp32_macro_f1']:.4f} -> Po2={metrics['po2_quantized_macro_f1']:.4f}"
+        )
+    else:
+        lines.append(
+            "  Perplexity: "
+            f"initial={metrics['initial_fp32_perplexity']:.4f} -> Po2={metrics['po2_quantized_perplexity']:.4f}"
+        )
+        lines.append(
+            "  Token accuracy: "
+            f"initial={metrics['initial_fp32_next_token_top1_accuracy']:.2%} "
+            f"-> Po2={metrics['po2_quantized_next_token_top1_accuracy']:.2%}"
+        )
+    gate = "PASS" if metrics.get("quality_gate_passed") else "WARNING"
+    lines.append(f"  Quality gate: {gate}")
+    lines.append(
+        "  Theoretical eligible-weight compression: "
+        f"{metrics.get('quantization_theoretical_eligible_compression_ratio', 0):.1f}x"
+    )
+    lines.append(f"  Full metrics: {run_dir / 'metrics_comparison.csv'}")
+    lines.append(f"  Weight comparison: {run_dir / 'weight_comparison.csv'}")
     return "\n".join(lines)

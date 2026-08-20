@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="760" height="330" viewBox="0 0 760 330" role="img" aria-labelledby="title desc">
+  <title id="title">Strong-profile TinyGPT language-model results</title>
+  <desc id="desc">Perplexity improves from 5.526 to 5.314 and token accuracy improves from 50.75 to 51.73 percent after power-of-two quantization-aware training.</desc>
+  <rect width="760" height="330" rx="14" fill="#f8fafc"/>
+  <text x="36" y="42" font-family="system-ui, sans-serif" font-size="22" font-weight="700" fill="#0f172a">TinyGPT results — strong profile</text>
+  <text x="36" y="68" font-family="system-ui, sans-serif" font-size="13" fill="#475569">Tiny Shakespeare validation sequences · seed 42</text>
+  <g font-family="system-ui, sans-serif">
+    <rect x="36" y="96" width="330" height="190" rx="12" fill="#ffffff" stroke="#e2e8f0"/>
+    <text x="60" y="128" font-size="15" font-weight="700" fill="#334155">Perplexity</text>
+    <text x="60" y="151" font-size="12" fill="#64748b">Lower is better</text>
+    <text x="60" y="206" font-size="35" font-weight="700" fill="#64748b">5.526</text>
+    <path d="M182 196 H226" stroke="#16a34a" stroke-width="3"/><path d="M218 188 L228 196 L218 204" fill="none" stroke="#16a34a" stroke-width="3"/>
+    <text x="242" y="206" font-size="35" font-weight="700" fill="#2563eb">5.314</text>
+    <text x="60" y="250" font-size="12" fill="#64748b">Initial FP32</text><text x="242" y="250" font-size="12" fill="#2563eb">Final Po2</text>
+    <rect x="394" y="96" width="330" height="190" rx="12" fill="#ffffff" stroke="#e2e8f0"/>
+    <text x="418" y="128" font-size="15" font-weight="700" fill="#334155">Token accuracy</text>
+    <text x="418" y="151" font-size="12" fill="#64748b">Higher is better</text>
+    <text x="418" y="206" font-size="31" font-weight="700" fill="#64748b">50.75%</text>
+    <path d="M548 196 H582" stroke="#16a34a" stroke-width="3"/><path d="M574 188 L584 196 L574 204" fill="none" stroke="#16a34a" stroke-width="3"/>
+    <text x="596" y="206" font-size="31" font-weight="700" fill="#2563eb">51.73%</text>
+    <text x="418" y="250" font-size="12" fill="#64748b">Initial FP32</text><text x="596" y="250" font-size="12" fill="#2563eb">Final Po2</text>
+  </g>
+  <text x="36" y="311" font-family="system-ui, sans-serif" font-size="12" fill="#64748b">Measured once on documented evaluation subsets; results vary by hardware and seed.</text>
+</svg>
