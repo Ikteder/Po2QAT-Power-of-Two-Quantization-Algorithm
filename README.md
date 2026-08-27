@@ -308,7 +308,7 @@ See [docs/INSTRUCTOR_GUIDE.md](docs/INSTRUCTOR_GUIDE.md) for grading prompts and
 ## References
 
 - I.A Udoy, O.Hassan., [Multiplier-Free LLM Linear Layers via Weights-Only Power-of-Two QAT
-](https://ieeexplore.ieee.org/document/11609079),2026
+](https://ieeexplore.ieee.org/document/11609079), 2026.
 - Przewlocka-Rus et al., [Power-of-Two Quantization for Low Bitwidth and Hardware Compliant Neural Networks](https://arxiv.org/abs/2203.05025), 2022.
 - Elgenedy, [Power-of-Two Quantization-Aware-Training (PoT-QAT) in Large Language Models](https://arxiv.org/abs/2601.02298), 2026.
 - PyTorch, [Reproducibility documentation](https://pytorch.org/docs/stable/notes/randomness.html).
