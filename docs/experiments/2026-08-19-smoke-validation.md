@@ -14,8 +14,10 @@ Purpose: structural end-to-end validation, not model-quality evaluation
 
 ## Command
 
+The original run used `--model all`, which selected the three models available on that date. The current equivalent is:
+
 ```text
-python -m po2qat run --model all --profile smoke --device cpu --output-dir runs-smoke
+python -m po2qat run --model classroom --profile smoke --device cpu --output-dir runs-smoke
 ```
 
 ## Observations

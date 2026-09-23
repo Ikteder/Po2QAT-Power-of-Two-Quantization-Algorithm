@@ -1,10 +1,12 @@
 # Po2QAT: Power of Two Quantization Algorithm
 
-A small, reproducible PyTorch project for learning **power-of-two quantization-aware training** (Po2QAT, also written **PoT-QAT** in the literature). It applies the same algorithm to:
+A reproducible PyTorch project for learning **power-of-two quantization-aware training** (Po2QAT). It applies the same algorithm to:
 
 1. `MobileNetTiny` — a small MobileNet-style CNN;
-2. `TinyViT` — a small Vision Transformer; and
-3. `TinyGPT` — a small decoder-only character language model.
+2. `TinyViT` — a small Vision Transformer;
+3. `VGG19` — the full VGG19 convolutional backbone with a CIFAR-10 classifier;
+4. `ResNet50` — the full ResNet50 bottleneck backbone with a CIFAR stem; and
+5. `TinyGPT` — a small decoder-only character language model.
 
 Each run saves the weights immediately before QAT, the floating-point master weights after QAT, and the final power-of-two weights. It also creates CSV files so you can inspect actual values without writing Python.
 
@@ -80,7 +82,7 @@ python -m pytest
 
 ## 4. Choose a model with the interactive launcher
 
-The easiest way to start is to run Po2QAT without arguments. It will ask whether you want the CNN, ViT, or small LLM, followed by the experiment profile.
+The easiest way to start is to run Po2QAT without arguments. It will ask which of the five models you want, followed by the experiment profile.
 
 Windows:
 
@@ -101,8 +103,10 @@ Po2QAT interactive launcher
 Choose the model you want to run:
   1. CNN — MobileNetTiny image classifier
   2. ViT — Tiny Vision Transformer
-  3. LLM — TinyGPT character language model
-Model [1/2/3]: 1
+  3. VGG19 — CIFAR-adapted VGG19 image classifier (large)
+  4. ResNet50 — CIFAR-adapted residual image classifier (large)
+  5. LLM — TinyGPT character language model
+Model [1/2/3/4/5]: 1
 
 Choose an experiment profile:
   1. smoke  — no download; checks that the pipeline works
@@ -116,18 +120,18 @@ The program prints progress during baseline training and Po2QAT, shows a concise
 
 ## 5. Run the no-download smoke experiment
 
-This proves that all three pipelines work. It uses deterministic synthetic data, only two baseline updates for TinyGPT, and one short epoch for each vision model. The outputs are structural checks, **not meaningful model quality results**.
+This proves that the three small-model pipelines work. It uses deterministic synthetic data, only two baseline updates for TinyGPT, and one short epoch for each small vision model. The outputs are structural checks, **not meaningful model quality results**.
 
 Windows:
 
 ```powershell
-.venv\Scripts\python.exe -m po2qat run --model all --profile smoke --device cpu
+.venv\Scripts\python.exe -m po2qat run --model classroom --profile smoke --device cpu
 ```
 
 macOS:
 
 ```bash
-python -m po2qat run --model all --profile smoke --device cpu
+python -m po2qat run --model classroom --profile smoke --device cpu
 ```
 
 ## 6. Reproduce the classroom experiments
@@ -140,10 +144,25 @@ python -m po2qat run --model vit --profile quick --device cpu
 python -m po2qat run --model llm --profile quick --device cpu
 ```
 
+### Optional large vision models
+
+VGG19 and ResNet50 use the same CIFAR-10 pipeline and Po2QAT exporter, but they are much larger and start without pretrained weights. Their CIFAR adaptations preserve the named feature backbones while replacing ImageNet-specific input/head components.
+
+Start with a smoke run and a conservative batch size:
+
+```text
+python -m po2qat run --model vgg19 --profile smoke --batch-size 8 --device auto
+python -m po2qat run --model resnet50 --profile smoke --batch-size 8 --device auto
+```
+
+For real-data training, replace `smoke` with `quick`. CUDA or Apple MPS is recommended. When `--batch-size` is omitted, the program automatically caps these two models at 16. Their checkpoints are much larger than the classroom models, and no measured accuracy claim is provided for them yet.
+
 For the measured, higher-quality reference configuration, use the `strong` profile. It uses the same fixed classroom datasets but trains longer:
 
 ```text
-python -m po2qat run --model all --profile strong --device cpu
+python -m po2qat run --model cnn --profile strong --device cpu
+python -m po2qat run --model vit --profile strong --device cpu
+python -m po2qat run --model llm --profile strong --device cpu
 ```
 
 On the reference Windows CPU, the three strong runs took approximately 4.6, 4.9, and 5.2 minutes respectively. See the [measured results](docs/experiments/2026-08-19-real-data-strong-results.md).
@@ -158,13 +177,13 @@ These charts summarize the documented, single-seed strong-profile run. They are 
 
 On Windows, replace `python` with `.venv\Scripts\python.exe`. On macOS, run these commands after activating the environment.
 
-For a longer experiment using all available training data:
+For a longer experiment using all available training data, run the desired model explicitly:
 
 ```text
-python -m po2qat run --model all --profile full
+python -m po2qat run --model cnn --profile full
 ```
 
-The full profile is intentionally longer. A CPU-only computer may take hours for all three models. You can stop after any individual model; its completed artifacts remain in `runs/`.
+The full profile is intentionally longer. A CPU-only computer may take hours. `--model classroom` runs the original three teaching models; `--model all` includes VGG19 and ResNet50 and is not recommended on a CPU-only computer. You can stop after any individual model; its completed artifacts remain in `runs/`.
 
 ## 7. Plot and analyze the run
 
@@ -177,7 +196,7 @@ python -m pip install -e ".[notebook]"
 python -m jupyter lab notebooks/po2qat_results_lab.ipynb
 ```
 
-Choose `MODEL = "cnn"`, `"vit"`, or `"llm"` in section 2 of the notebook. Start with `PROFILE = "quick"`; use `strong` only when you have the documented time budget.
+Choose `MODEL = "cnn"`, `"vit"`, `"vgg19"`, `"resnet50"`, or `"llm"` in section 2 of the notebook. Start large models with `PROFILE = "smoke"`; use `quick` or `strong` only when you have the required compute budget.
 
 ## 8. Inspect the weights
 
@@ -213,7 +232,7 @@ python -m po2qat inspect runs/cnn
 
 ### Metrics produced
 
-For the CNN and ViT, each of the three states reports:
+For every vision model, each of the three states reports:
 
 - cross-entropy loss;
 - top-1 and top-5 accuracy;
@@ -293,7 +312,7 @@ The forward value is Po2, while the derivative with respect to `fp_weight` is on
 
 **The dataset download fails** — check the network, delete the incomplete `data/cifar-10-*` file or `data/tinyshakespeare/input.txt`, and rerun. The smoke profile requires no download.
 
-**The process runs out of memory** — reduce `--batch-size`, for example `--batch-size 16`.
+**The process runs out of memory** — reduce `--batch-size`. Start VGG19 or ResNet50 with `--batch-size 8`; try `2` or `4` on a memory-limited machine.
 
 **MPS operation is unsupported** — rerun with `--device cpu`.
 
@@ -305,13 +324,11 @@ Use the [Po2QAT assignment worksheet](docs/assignments/PO2QAT_ASSIGNMENT.md) for
 
 See [docs/INSTRUCTOR_GUIDE.md](docs/INSTRUCTOR_GUIDE.md) for grading prompts and [docs/experiments/EXPERIMENT_TEMPLATE.md](docs/experiments/EXPERIMENT_TEMPLATE.md) for a report template.
 
-## References
+## Reference
 
-- I.A Udoy, O.Hassan., [Multiplier-Free LLM Linear Layers via Weights-Only Power-of-Two QAT
-](https://ieeexplore.ieee.org/document/11609079), 2026.
-- Przewlocka-Rus et al., [Power-of-Two Quantization for Low Bitwidth and Hardware Compliant Neural Networks](https://arxiv.org/abs/2203.05025), 2022.
-- Elgenedy, [Power-of-Two Quantization-Aware-Training (PoT-QAT) in Large Language Models](https://arxiv.org/abs/2601.02298), 2026.
-- PyTorch, [Reproducibility documentation](https://pytorch.org/docs/stable/notes/randomness.html).
+- Ikteder Akhand Udoy and Omiya Hassan, [Multiplier-Free LLM Linear Layers via Weights-Only Power-of-Two QAT](https://doi.org/10.1109/ICAD69378.2026.11609079), IEEE International Conference on AI and Data Analytics, 2026.
+
+Supporting documentation: [PyTorch reproducibility](https://pytorch.org/docs/stable/notes/randomness.html) and [torchvision model documentation](https://pytorch.org/vision/stable/models.html).
 
 ## License
 

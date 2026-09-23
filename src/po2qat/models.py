@@ -1,9 +1,12 @@
 from __future__ import annotations
 
-import math
-
 import torch
 from torch import nn
+from torchvision.models import resnet50 as torchvision_resnet50
+
+
+VISION_MODEL_NAMES = ("cnn", "vit", "vgg19", "resnet50")
+LARGE_VISION_MODEL_NAMES = ("vgg19", "resnet50")
 
 
 class ConvBNAct(nn.Sequential):
@@ -117,11 +120,78 @@ class TinyGPT(nn.Module):
         return self.lm_head(self.norm(self.blocks(hidden)))
 
 
+class VGG19CIFAR(nn.Module):
+    """VGG19 convolutional backbone with a practical CIFAR-10 classifier.
+
+    The 19-layer feature extractor is unchanged. The ImageNet-specific
+    7x7/4096-unit classifier is replaced because CIFAR-10 inputs are 32x32.
+    """
+    def __init__(self, num_classes: int = 10) -> None:
+        super().__init__()
+        configuration: list[int | str] = [
+            64, 64, "M",
+            128, 128, "M",
+            256, 256, 256, 256, "M",
+            512, 512, 512, 512, "M",
+            512, 512, 512, 512, "M",
+        ]
+        layers: list[nn.Module] = []
+        in_channels = 3
+        for entry in configuration:
+            if entry == "M":
+                layers.append(nn.MaxPool2d(kernel_size=2, stride=2))
+                continue
+            out_channels = int(entry)
+            layers.extend(
+                [
+                    nn.Conv2d(in_channels, out_channels, kernel_size=3, padding=1),
+                    nn.ReLU(inplace=True),
+                ]
+            )
+            in_channels = out_channels
+        self.features = nn.Sequential(*layers)
+        self.avgpool = nn.AdaptiveAvgPool2d((1, 1))
+        self.classifier = nn.Sequential(
+            nn.Linear(512, 512),
+            nn.ReLU(inplace=True),
+            nn.Dropout(p=0.5),
+            nn.Linear(512, num_classes),
+        )
+        for module in self.modules():
+            if isinstance(module, nn.Conv2d):
+                nn.init.kaiming_normal_(module.weight, mode="fan_out", nonlinearity="relu")
+                nn.init.zeros_(module.bias)
+            elif isinstance(module, nn.Linear):
+                nn.init.normal_(module.weight, 0, 0.01)
+                nn.init.zeros_(module.bias)
+
+    def forward(self, inputs: torch.Tensor) -> torch.Tensor:
+        features = self.avgpool(self.features(inputs))
+        return self.classifier(torch.flatten(features, 1))
+
+
+def build_vgg19_cifar(num_classes: int = 10) -> nn.Module:
+    return VGG19CIFAR(num_classes=num_classes)
+
+
+def build_resnet50_cifar(num_classes: int = 10) -> nn.Module:
+    """ResNet50 with the standard CIFAR stem and a 10-class output head."""
+    model = torchvision_resnet50(weights=None, num_classes=num_classes)
+    model.conv1 = nn.Conv2d(3, 64, kernel_size=3, stride=1, padding=1, bias=False)
+    model.maxpool = nn.Identity()
+    nn.init.kaiming_normal_(model.conv1.weight, mode="fan_out", nonlinearity="relu")
+    return model
+
+
 def build_model(name: str, vocab_size: int | None = None, block_size: int = 96) -> nn.Module:
     if name == "cnn":
         return MobileNetTiny()
     if name == "vit":
         return TinyViT()
+    if name == "vgg19":
+        return build_vgg19_cifar()
+    if name == "resnet50":
+        return build_resnet50_cifar()
     if name == "llm":
         if vocab_size is None:
             raise ValueError("vocab_size is required for the LLM")

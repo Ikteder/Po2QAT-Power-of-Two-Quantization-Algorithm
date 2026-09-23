@@ -17,7 +17,7 @@ from torch import nn
 from .artifacts import export_run
 from .data import CharacterTokenizer, load_text, sample_language_batch, vision_loaders
 from .evaluation import classification_report, language_report
-from .models import build_model, count_parameters
+from .models import LARGE_VISION_MODEL_NAMES, VISION_MODEL_NAMES, build_model, count_parameters
 from .quantization import materialize_model, prepare_po2_qat
 
 
@@ -156,17 +156,19 @@ def _train_language(
 
 
 def run_experiment(config: ExperimentConfig) -> Path:
-    if config.model not in {"cnn", "vit", "llm"}:
-        raise ValueError("model must be cnn, vit, or llm")
+    if config.model not in {*VISION_MODEL_NAMES, "llm"}:
+        raise ValueError("model must be cnn, vit, vgg19, resnet50, or llm")
     if config.profile not in PROFILE_DEFAULTS:
         raise ValueError("profile must be smoke, quick, strong, or full")
     seed_everything(config.seed)
     device = resolve_device(config.device)
     batch_size = config.batch_size if config.batch_size is not None else _resolve(config, "batch_size")
+    if config.model in LARGE_VISION_MODEL_NAMES and config.batch_size is None:
+        batch_size = min(batch_size, 16)
     history: list[dict[str, Any]] = []
     started = time.time()
 
-    if config.model in {"cnn", "vit"}:
+    if config.model in VISION_MODEL_NAMES:
         train_loader, test_loader, dataset_label = vision_loaders(
             config.data_dir, batch_size, config.profile, config.seed, config.workers
         )
@@ -234,7 +236,7 @@ def run_experiment(config: ExperimentConfig) -> Path:
 
     initial_summary = evaluations["initial_fp32"]["summary"]
     po2_summary = evaluations["po2_quantized"]["summary"]
-    if config.model in {"cnn", "vit"}:
+    if config.model in VISION_MODEL_NAMES:
         quality_checks = {
             "accuracy_drop_at_most_0.02": po2_summary["accuracy"] >= initial_summary["accuracy"] - 0.02,
             "loss_increase_at_most_5_percent": po2_summary["loss"] <= initial_summary["loss"] * 1.05,

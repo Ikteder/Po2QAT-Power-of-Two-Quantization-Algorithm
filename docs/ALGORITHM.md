@@ -4,7 +4,7 @@
 
 This repository implements weight-only, signed power-of-two quantization-aware training for every `torch.nn.Conv2d` and `torch.nn.Linear` module. Biases, normalization parameters, positional parameters, and embedding lookup tables remain floating point. The export includes them, but labels them as unquantized.
 
-The name **Po2QAT** in this repository is equivalent to the **PoT-QAT** terminology used in the cited literature.
+The repository uses **Po2QAT** as its student-facing name for weights-only power-of-two quantization-aware training.
 
 ## Codebook
 
@@ -57,10 +57,9 @@ This separation is important: the master checkpoint is not a deployable Po2 chec
 - PyTorch still evaluates materialized Po2 values with ordinary floating-point convolution/matrix multiplication.
 - No FPGA, ASIC, CPU bit-shift kernel, or packed four-bit runtime is included.
 - Exponent storage in the NPZ is intentionally simple and inspectable, not bit-packed to its theoretical minimum.
-- The small models and short classroom schedules do not reproduce the headline metrics of the papers.
+- The short classroom schedules do not reproduce publication-scale results, especially for VGG19 and ResNet50 trained from scratch.
 
-## Primary references
+## Primary reference
 
-- Dominika Przewlocka-Rus et al., *Power-of-Two Quantization for Low Bitwidth and Hardware Compliant Neural Networks*, arXiv:2203.05025 (2022).
-- Mahmoud Elgenedy, *Power-of-Two Quantization-Aware-Training (PoT-QAT) in Large Language Models (LLMs)*, arXiv:2601.02298 (2026).
+- Ikteder Akhand Udoy and Omiya Hassan, *Multiplier-Free LLM Linear Layers via Weights-Only Power-of-Two QAT*, IEEE International Conference on AI and Data Analytics (2026), DOI: [10.1109/ICAD69378.2026.11609079](https://doi.org/10.1109/ICAD69378.2026.11609079).
 

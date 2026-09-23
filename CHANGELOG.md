@@ -2,6 +2,18 @@
 
 All notable changes to this teaching project are documented here.
 
+## [Unreleased]
+
+### Added
+
+- CIFAR-adapted VGG19 and ResNet50 model options with automatic conservative batch sizing.
+- Interactive, command-line, notebook, model-card, and assignment guidance for both large models.
+
+### Changed
+
+- The research reference now cites the repository author's IEEE ICAD 2026 Po2QAT paper.
+- `--model classroom` preserves the fast original three-model workflow; `--model all` includes both large models.
+
 ## [1.0.0] - 2026-08-19
 
 ### Added

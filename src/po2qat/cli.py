@@ -12,9 +12,15 @@ from .experiment import ExperimentConfig, run_experiment
 MODEL_CHOICES = {
     "1": "cnn",
     "2": "vit",
-    "3": "llm",
+    "3": "vgg19",
+    "4": "resnet50",
+    "5": "llm",
     "cnn": "cnn",
     "vit": "vit",
+    "vgg": "vgg19",
+    "vgg19": "vgg19",
+    "resnet": "resnet50",
+    "resnet50": "resnet50",
     "llm": "llm",
 }
 
@@ -29,6 +35,9 @@ PROFILE_CHOICES = {
     "full": "full",
 }
 
+CLASSROOM_MODELS = ["cnn", "vit", "llm"]
+ALL_MODELS = ["cnn", "vit", "vgg19", "resnet50", "llm"]
+
 
 def _parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
@@ -37,7 +46,12 @@ def _parser() -> argparse.ArgumentParser:
     )
     subparsers = parser.add_subparsers(dest="command", required=True)
     run = subparsers.add_parser("run", help="train, run Po2QAT, evaluate, and export weights")
-    run.add_argument("--model", choices=["cnn", "vit", "llm", "all"], required=True)
+    run.add_argument(
+        "--model",
+        choices=["cnn", "vit", "vgg19", "resnet50", "llm", "classroom", "all"],
+        required=True,
+        help="'classroom' runs the three small models; 'all' also runs VGG19 and ResNet50",
+    )
     run.add_argument("--profile", choices=["smoke", "quick", "strong", "full"], default="quick")
     run.add_argument("--output-dir", type=Path, default=Path("runs"))
     run.add_argument("--data-dir", type=Path, default=Path("data"))
@@ -72,8 +86,10 @@ def interactive_argv(input_fn=input) -> list[str]:
     print("Choose the model you want to run:", flush=True)
     print("  1. CNN - MobileNetTiny image classifier", flush=True)
     print("  2. ViT - Tiny Vision Transformer", flush=True)
-    print("  3. LLM - TinyGPT character language model", flush=True)
-    model = _ask_choice("Model [1/2/3]: ", MODEL_CHOICES, input_fn=input_fn)
+    print("  3. VGG19 - CIFAR-adapted VGG19 image classifier (large)", flush=True)
+    print("  4. ResNet50 - CIFAR-adapted residual image classifier (large)", flush=True)
+    print("  5. LLM - TinyGPT character language model", flush=True)
+    model = _ask_choice("Model [1/2/3/4/5]: ", MODEL_CHOICES, input_fn=input_fn)
 
     print("\nChoose an experiment profile:", flush=True)
     print("  1. smoke  - no download; checks that the pipeline works", flush=True)
@@ -85,6 +101,14 @@ def interactive_argv(input_fn=input) -> list[str]:
     return ["run", "--model", model, "--profile", profile]
 
 
+def expand_model_selection(selection: str) -> list[str]:
+    if selection == "classroom":
+        return CLASSROOM_MODELS.copy()
+    if selection == "all":
+        return ALL_MODELS.copy()
+    return [selection]
+
+
 def main(argv: list[str] | None = None) -> None:
     supplied = sys.argv[1:] if argv is None else argv
     if not supplied:
@@ -93,7 +117,13 @@ def main(argv: list[str] | None = None) -> None:
     if args.command == "inspect":
         print(read_summary(args.run_dir))
         return
-    names = ["cnn", "vit", "llm"] if args.model == "all" else [args.model]
+    names = expand_model_selection(args.model)
+    if args.model == "all":
+        print(
+            "NOTE: --model all includes compute-intensive VGG19 and ResNet50 runs. "
+            "Use --model classroom for only the three small teaching models.",
+            flush=True,
+        )
     for name in names:
         config = ExperimentConfig(
             model=name,

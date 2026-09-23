@@ -23,6 +23,30 @@
 - Not quantized: layer norms, class token, positional embedding, and biases
 - Non-goal: ImageNet-scale ViT quality
 
+## VGG19
+
+- Intended use: optional large-model CIFAR-10 Po2QAT exercise
+- Family: VGG19 feature backbone with all 16 convolutional layers, constructed directly to avoid allocating the unused ImageNet classifier
+- CIFAR adaptation: adaptive `1x1` pooling and a `512 -> 512 -> 10` classifier replace the ImageNet-specific `7x7/4096` head
+- Input/output: RGB `32x32` images and 10 logits
+- Initialization: random; no pretrained weights are downloaded
+- Quantized: all convolution and linear weights
+- Not quantized: biases
+- Resource note: about 20.3 million parameters; use a GPU/MPS when possible and begin with `--batch-size 8`
+- Non-goal: reproducing torchvision ImageNet accuracy or the original ImageNet classifier
+
+## ResNet50
+
+- Intended use: optional large-model CIFAR-10 Po2QAT exercise
+- Family: torchvision ResNet50 bottleneck backbone
+- CIFAR adaptation: `3x3`, stride-1 stem, no initial max pool, and a 10-class head
+- Input/output: RGB `32x32` images and 10 logits
+- Initialization: random; no pretrained weights are downloaded
+- Quantized: all convolution and final linear weights
+- Not quantized: batch-normalization parameters and biases
+- Resource note: about 23.5 million parameters; use a GPU/MPS when possible and begin with `--batch-size 8`
+- Non-goal: reproducing torchvision ImageNet accuracy
+
 ## TinyGPT
 
 - Intended use: demonstrate Po2QAT in an autoregressive transformer on laptop hardware
@@ -35,4 +59,4 @@
 
 ## Shared risks and limitations
 
-All models train from scratch with intentionally short schedules. A metric can vary across platforms, dependencies, seeds, and devices. The models are educational artifacts and are not intended for safety-critical, medical, surveillance, or production decision-making.
+All models train from scratch with intentionally short schedules. VGG19 and ResNet50 are optional compute-intensive extensions and do not have measured reference scores in this repository. A metric can vary across platforms, dependencies, seeds, and devices. The models are educational artifacts and are not intended for safety-critical, medical, surveillance, or production decision-making.

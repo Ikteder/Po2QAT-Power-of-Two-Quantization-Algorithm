@@ -15,18 +15,18 @@ By the end of this assignment, you should be able to:
 
 ## Procedure
 
-1. Install the project by following the root \`README.md\`.
-2. Run \`python -m po2qat\` and select CNN, ViT, or LLM.
-3. Complete a \`smoke\` run to confirm your environment works.
-4. Run your assigned model with the \`quick\` profile. Use \`strong\` only if your instructor requests it and your machine has enough time.
-5. Open \`notebooks/po2qat_results_lab.ipynb\` locally or in Colab and generate all applicable plots.
+1. Install the project by following the root `README.md`.
+2. Run `python -m po2qat` and select CNN, ViT, VGG19, ResNet50, or LLM.
+3. Complete a `smoke` run to confirm your environment works.
+4. Run your assigned model with the `quick` profile. For VGG19 or ResNet50, begin with `smoke` and `--batch-size 8`; use a longer profile only if your instructor requests it and your machine has enough memory and time.
+5. Open `notebooks/po2qat_results_lab.ipynb` locally or in Colab and generate all applicable plots.
 6. Keep the complete output folder for your submission.
 
 ## Evidence to submit
 
-- \`config.json\`, \`metrics.json\`, \`metrics_comparison.csv\`, \`training_history.csv\`, and \`weight_summary.csv\`;
+- `config.json`, `metrics.json`, `metrics_comparison.csv`, `training_history.csv`, and `weight_summary.csv`;
 - initial and final checkpoints;
-- both confusion matrices for CNN/ViT, or the token-metric table for LLM;
+- both confusion matrices for a vision model, or the token-metric table for LLM;
 - four labeled figures: task metrics, training loss, weight distribution, and confusion matrices when applicable;
 - a 600–900 word analysis answering the questions below.
 
@@ -36,10 +36,10 @@ By the end of this assignment, you should be able to:
 2. What changed between the initial FP32 model and the final Po2 model? Report every relevant metric and both absolute and relative changes.
 3. Did the final model pass the configured quality gate? Explain what the gate protects against and what it does **not** prove.
 4. Compare the float-finetune and QAT loss curves. Where do you see convergence, instability, or under-training?
-5. For CNN/ViT: which classes are most often confused, and what evidence supports your answer? For LLM: relate loss, perplexity, and token accuracy.
+5. For a vision model: which classes are most often confused, and what evidence supports your answer? For LLM: relate loss, perplexity, and token accuracy.
 6. How did the weight distribution change across initial FP32, QAT master, and final Po2 checkpoints?
-7. Use \`weight_summary.csv\`, \`weight_comparison.csv\`, and \`po2_sign_exponent.npz\` to explain how you know the quantized weights are exactly zero or signed powers of two.
-8. Why are biases, normalization parameters, embeddings, and the output head excluded by default? State one advantage and one limitation of that choice.
+7. Use `weight_summary.csv`, `weight_comparison.csv`, and `po2_sign_exponent.npz` to explain how you know the quantized weights are exactly zero or signed powers of two.
+8. Why are biases, normalization parameters, and embeddings excluded by default while convolution and linear output-head weights remain eligible? State one advantage and one limitation of that choice.
 9. Can this run establish that Po2QAT always improves accuracy? Why or why not?
 10. Propose one controlled follow-up experiment. Name the independent variable, constants, metrics, and number of seeds.
 

@@ -1,7 +1,7 @@
 # Decision 0001: small self-contained model families
 
 Date: 2026-08-19  
-Status: accepted
+Status: accepted; model scope extended by Decision 0002
 
 ## Decision
 

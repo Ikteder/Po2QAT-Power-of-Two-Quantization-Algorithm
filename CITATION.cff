@@ -1,5 +1,5 @@
 cff-version: 1.2.0
-message: "If you use this teaching repository, cite the repository and the primary PoT-QAT papers listed in the README."
+message: "If you use this teaching repository, cite the repository and the author paper listed in the README."
 title: "Po2QAT: Power of Two Quantization Algorithm"
 type: software
 version: 1.0.0

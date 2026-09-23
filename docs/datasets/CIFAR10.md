@@ -6,7 +6,7 @@ The project downloads CIFAR-10 through `torchvision.datasets.CIFAR10`. The canon
 
 ## Use
 
-- Models: MobileNetTiny and TinyViT
+- Models: MobileNetTiny, TinyViT, VGG19, and ResNet50
 - Task: 10-class image classification
 - Quick profile: seeded 4,096-image train subset and 1,000-image test subset
 - Full profile: standard 50,000 train and 10,000 test images
