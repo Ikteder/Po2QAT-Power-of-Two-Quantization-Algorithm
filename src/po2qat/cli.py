@@ -64,7 +64,7 @@ def _parser() -> argparse.ArgumentParser:
     run.add_argument("--qat-epochs", type=int)
     run.add_argument("--baseline-steps", type=int)
     run.add_argument("--qat-steps", type=int)
-    run.add_argument("--device", default="auto", help="auto, cpu, cuda, mps, etc.")
+    run.add_argument("--device", default="auto", help="auto, cpu, cuda, mps, tpu, or xla")
     run.add_argument("--workers", type=int, default=0, help="0 is the safest cross-platform setting")
     inspect = subparsers.add_parser("inspect", help="print metrics and locate exported weight tables")
     inspect.add_argument("run_dir", type=Path)

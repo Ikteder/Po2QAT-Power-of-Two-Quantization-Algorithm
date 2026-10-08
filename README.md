@@ -41,7 +41,7 @@ git clone https://github.com/Ikteder/Po2QAT-Power-of-Two-Quantization-Algorithm.
 cd Po2QAT-Power-of-Two-Quantization-Algorithm
 ```
 
-Use Python **3.10 through 3.14**. Python 3.11 or 3.12 is the safest choice when your course does not specify a version.
+Use Python **3.10 through 3.14**. Python 3.11 or 3.12 is the safest choice when your course does not specify a version; Colab TPU currently uses Python 3.12.
 
 ## 2. Install it
 
@@ -66,6 +66,24 @@ python -m pip install -e ".[dev]"
 
 Apple Silicon is supported. The program automatically selects Apple MPS when available; use `--device cpu` when exact cross-machine reproducibility matters.
 
+### Linux Terminal
+
+Use the setup script. On Linux it installs the matched CPU builds of PyTorch 2.11 and torchvision 0.26 before installing the project, avoiding mismatched wheels and unnecessary NVIDIA packages on CPU-only computers.
+
+```bash
+sh scripts/setup.sh
+source .venv/bin/activate
+```
+
+For an NVIDIA machine, supply the matching official PyTorch wheel index. For example, CUDA 12.8 uses:
+
+```bash
+PO2QAT_TORCH_INDEX_URL=https://download.pytorch.org/whl/cu128 sh scripts/setup.sh
+source .venv/bin/activate
+```
+
+Do not mix a CPU `torch` wheel with a CUDA `torchvision` wheel, or vice versa.
+
 ## 3. Verify the installation
 
 Windows:
@@ -74,7 +92,7 @@ Windows:
 .venv\Scripts\python.exe -m pytest
 ```
 
-macOS:
+macOS or Linux:
 
 ```bash
 python -m pytest
@@ -116,7 +134,7 @@ Choose an experiment profile:
 Profile [1/2/3/4, default 2]: 3
 ```
 
-The program prints progress during baseline training and Po2QAT, shows a concise final comparison, then saves every detailed metric and weight artifact under `runs/<model>/`.
+The program prints progress during baseline training and Po2QAT, shows a concise final comparison, then saves every detailed metric and weight artifact under `runs/<model>/`. `--output-dir` accepts either a shared root such as `runs` or an already model-specific path such as `runs/cnn`; it will not create `runs/cnn/cnn`.
 
 ## 5. Run the no-download smoke experiment
 
@@ -189,14 +207,23 @@ The full profile is intentionally longer. A CPU-only computer may take hours. `-
 
 [![Open the results lab in Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/Ikteder/Po2QAT-Power-of-Two-Quantization-Algorithm/blob/main/notebooks/po2qat_results_lab.ipynb)
 
-The [results notebook](notebooks/po2qat_results_lab.ipynb) can run an experiment and plot initial-versus-Po2 task metrics, training loss, classifier confusion matrices, and all three weight distributions. In Colab, open the badge and run the cells from top to bottom. For local Jupyter:
+The [results notebook](notebooks/po2qat_results_lab.ipynb) can run an experiment and plot initial-versus-Po2 task metrics, training loss, classifier confusion matrices, and all three weight distributions. In Colab, open the badge and run the cells from top to bottom. The notebook now keeps `OUTPUT_ROOT = Path("runs")` separate from `RUN_DIR`, so artifacts are written once to `runs/<model>/`.
+
+For a Colab TPU:
+
+1. Select **Runtime > Change runtime type > TPU**.
+2. In the first setup code cell, change `DEVICE = "auto"` to `DEVICE = "tpu"`.
+3. Run the setup cell before any cell that imports PyTorch. It installs the matched PyTorch/XLA packages.
+4. Start with `MODEL = "cnn"` and `PROFILE = "smoke"`. TPU compilation makes the first step slower; the optional VGG19 and ResNet50 runs need substantially more memory and compile time.
+
+For local Jupyter:
 
 ```text
 python -m pip install -e ".[notebook]"
 python -m jupyter lab notebooks/po2qat_results_lab.ipynb
 ```
 
-Choose `MODEL = "cnn"`, `"vit"`, `"vgg19"`, `"resnet50"`, or `"llm"` in section 2 of the notebook. Start large models with `PROFILE = "smoke"`; use `quick` or `strong` only when you have the required compute budget.
+Choose `MODEL = "cnn"`, `"vit"`, `"vgg19"`, `"resnet50"`, or `"llm"` in section 2 of the notebook. The setup cell accepts `DEVICE = "auto"`, `"cpu"`, `"cuda"`, `"mps"`, or `"tpu"`. Start large models with `PROFILE = "smoke"`; use `quick` or `strong` only when you have the required compute budget.
 
 ## 8. Inspect the weights
 
@@ -302,7 +329,7 @@ The forward value is Po2, while the derivative with respect to `fp_weight` is on
 - The default seed is `42`; change it with `--seed`.
 - Dataset selection and batch order use seeded generators.
 - `--workers 0` avoids Windows/macOS multiprocessing differences.
-- CPU runs are the closest cross-platform comparison. CUDA and MPS can produce small numerical differences.
+- CPU runs are the closest cross-platform comparison. CUDA, MPS, and TPU/XLA can produce small numerical differences.
 - The smoke profile tests plumbing only. Report scientific comparisons from `quick` or `full`, and always include the profile, device, package versions, and seed.
 - Training from scratch on a small subset is noisy. Do not interpret one run as proof that a model family is inherently more quantization-friendly.
 
@@ -315,6 +342,12 @@ The forward value is Po2, while the derivative with respect to `fp_weight` is on
 **The process runs out of memory** — reduce `--batch-size`. Start VGG19 or ResNet50 with `--batch-size 8`; try `2` or `4` on a memory-limited machine.
 
 **MPS operation is unsupported** — rerun with `--device cpu`.
+
+**Linux reports a missing torchvision operator or incompatible torch build** — recreate the environment with `sh scripts/setup.sh`. The script installs the matched PyTorch 2.11/torchvision 0.26 pair from one wheel index.
+
+**Colab TPU is not detected or `torch_xla` is missing** — confirm that the runtime type is TPU, set `DEVICE = "tpu"` in the notebook setup cell, restart the runtime if PyTorch was already imported, and run the notebook again from the first cell.
+
+**Artifacts appear under `runs/cnn/cnn`** — update the notebook or pull the latest repository version. Pass either `--output-dir runs` or `--output-dir runs/cnn`; both now resolve to `runs/cnn`.
 
 **Windows creates DataLoader errors** — leave `--workers 0` (the default).
 

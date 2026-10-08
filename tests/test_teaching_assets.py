@@ -16,6 +16,11 @@ def test_notebook_is_valid_and_code_cells_compile() -> None:
         if cell["cell_type"] == "code":
             ast.parse("".join(cell["source"]), filename=f"cell-{index}")
 
+    code = "\n".join("".join(cell["source"]) for cell in notebook["cells"] if cell["cell_type"] == "code")
+    assert 'DEVICE = "auto"  # auto, cpu, cuda, mps, or tpu' in code
+    assert '"--output-dir", str(OUTPUT_ROOT)' in code
+    assert '"--output-dir", str(RUN_DIR)' not in code
+
 
 def test_teaching_docs_and_accessible_charts_exist() -> None:
     assignment = ROOT / "docs" / "assignments" / "PO2QAT_ASSIGNMENT.md"

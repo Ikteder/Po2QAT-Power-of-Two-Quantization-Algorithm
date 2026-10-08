@@ -9,5 +9,5 @@ if ($PythonCommand -eq "py") {
 & .venv\Scripts\python.exe -m pip install --upgrade pip
 & .venv\Scripts\python.exe -m pip install -e ".[dev]"
 & .venv\Scripts\python.exe -m pytest
-Write-Host "Setup complete. Run: .venv\Scripts\python.exe -m po2qat run --model all --profile smoke --device cpu"
+Write-Host "Setup complete. Run: .venv\Scripts\python.exe -m po2qat run --model classroom --profile smoke --device cpu"
 

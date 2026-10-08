@@ -4,21 +4,26 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "po2qat-student-lab"
-version = "1.0.0"
-description = "Reproducible Power-of-Two quantization-aware-training labs for a CNN, ViT, and tiny GPT."
+version = "1.2.0"
+description = "Reproducible Power-of-Two quantization-aware-training labs for vision and language models."
 readme = "README.md"
 requires-python = ">=3.10,<3.15"
 license = {text = "MIT"}
 authors = [{name = "Po2QAT Student Lab contributors"}]
 dependencies = [
   "numpy>=1.26,<3",
-  "torch>=2.3,<3",
-  "torchvision>=0.18,<1",
+  "torch>=2.8,<3",
+  "torchvision>=0.23,<1",
 ]
 
 [project.optional-dependencies]
 dev = ["pytest>=8,<10", "ruff>=0.9,<1"]
 notebook = ["jupyterlab>=4,<5", "matplotlib>=3.8,<4"]
+tpu = [
+  "torch==2.9.0; platform_system == 'Linux'",
+  "torchvision==0.24.0; platform_system == 'Linux'",
+  "torch_xla[tpu]==2.9.0; platform_system == 'Linux'",
+]
 
 [project.scripts]
 po2qat = "po2qat.cli:main"

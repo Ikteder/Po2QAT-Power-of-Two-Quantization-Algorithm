@@ -1,6 +1,8 @@
 from __future__ import annotations
 
 import copy
+import importlib
+import os
 import platform
 import random
 import sys
@@ -56,14 +58,46 @@ def seed_everything(seed: int) -> None:
         torch.cuda.manual_seed_all(seed)
 
 
+def _xla_device() -> torch.device:
+    try:
+        torch_xla = importlib.import_module("torch_xla")
+    except ImportError as error:
+        raise RuntimeError(
+            "TPU support requires PyTorch/XLA. In Colab, select a TPU runtime, "
+            "set DEVICE = 'tpu' in the notebook setup cell, and rerun the setup cell."
+        ) from error
+    return torch_xla.device()
+
+
+def _is_tpu_runtime() -> bool:
+    has_colab_tpu = any(os.environ.get(name) for name in ("COLAB_TPU_ADDR", "TPU_NAME"))
+    return has_colab_tpu or os.environ.get("PJRT_DEVICE") == "TPU"
+
+
 def resolve_device(requested: str) -> torch.device:
-    if requested != "auto":
-        return torch.device(requested)
+    normalized = requested.lower()
+    if normalized in {"tpu", "xla"}:
+        return _xla_device()
+    if normalized != "auto":
+        return torch.device(normalized)
+    if _is_tpu_runtime():
+        return _xla_device()
     if torch.cuda.is_available():
         return torch.device("cuda")
     if hasattr(torch.backends, "mps") and torch.backends.mps.is_available():
         return torch.device("mps")
     return torch.device("cpu")
+
+
+def _optimizer_step(optimizer: torch.optim.Optimizer, device: torch.device) -> None:
+    optimizer.step()
+    if device.type == "xla":
+        importlib.import_module("torch_xla").sync()
+
+
+def resolve_run_dir(output_dir: Path, model: str) -> Path:
+    """Accept either an output root (runs) or an already model-specific path (runs/cnn)."""
+    return output_dir if output_dir.name.casefold() == model.casefold() else output_dir / model
 
 
 def _resolve(config: ExperimentConfig, key: str) -> int:
@@ -104,12 +138,18 @@ def _train_classification(
             optimizer.zero_grad(set_to_none=True)
             loss = F.cross_entropy(model(inputs), targets)
             loss.backward()
-            optimizer.step()
+            _optimizer_step(optimizer, device)
             running += float(loss.detach()) * targets.numel()
             seen += targets.numel()
         val_loss, val_accuracy = _classification_eval(model, test_loader, device)
         history.append(
-            {"phase": phase, "step_or_epoch": epoch, "train_loss": running / seen, "val_loss": val_loss, "val_metric": val_accuracy}
+            {
+                "phase": phase,
+                "step_or_epoch": epoch,
+                "train_loss": running / seen,
+                "val_loss": val_loss,
+                "val_metric": val_accuracy,
+            }
         )
         print(
             f"  [{phase}] epoch {epoch}/{epochs} "
@@ -141,7 +181,7 @@ def _train_language(
         loss = F.cross_entropy(logits.reshape(-1, logits.shape[-1]), targets.reshape(-1))
         loss.backward()
         torch.nn.utils.clip_grad_norm_(model.parameters(), 1.0)
-        optimizer.step()
+        _optimizer_step(optimizer, device)
         if step == 1 or step == steps or step % log_every == 0:
             history.append(
                 {
@@ -181,7 +221,9 @@ def run_experiment(config: ExperimentConfig) -> Path:
         initial_model = copy.deepcopy(baseline).cpu()
         initial_report = classification_report(initial_model.to(device), test_loader, device)
         qat_model, quantized_names = prepare_po2_qat(initial_model, config.num_bits)
-        _train_classification(qat_model, train_loader, test_loader, device, qat_epochs, config.qat_learning_rate, "qat", history)
+        _train_classification(
+            qat_model, train_loader, test_loader, device, qat_epochs, config.qat_learning_rate, "qat", history
+        )
         master_model = materialize_model(qat_model, quantized=False).to(device)
         po2_model = materialize_model(qat_model, quantized=True).to(device)
         master_report = classification_report(master_model, test_loader, device)
@@ -197,7 +239,16 @@ def run_experiment(config: ExperimentConfig) -> Path:
         baseline_steps = _resolve(config, "baseline_steps")
         qat_steps = _resolve(config, "qat_steps")
         _train_language(
-            baseline, train_tokens, device, baseline_steps, batch_size, config.learning_rate, block_size, config.seed, "baseline", history
+            baseline,
+            train_tokens,
+            device,
+            baseline_steps,
+            batch_size,
+            config.learning_rate,
+            block_size,
+            config.seed,
+            "baseline",
+            history,
         )
         initial_model = copy.deepcopy(baseline).cpu()
         initial_report = language_report(
@@ -205,14 +256,23 @@ def run_experiment(config: ExperimentConfig) -> Path:
         )
         qat_model, quantized_names = prepare_po2_qat(initial_model, config.num_bits)
         _train_language(
-            qat_model, train_tokens, device, qat_steps, batch_size, config.qat_learning_rate, block_size, config.seed + 1, "qat", history
+            qat_model,
+            train_tokens,
+            device,
+            qat_steps,
+            batch_size,
+            config.qat_learning_rate,
+            block_size,
+            config.seed + 1,
+            "qat",
+            history,
         )
         master_model = materialize_model(qat_model, quantized=False).to(device)
         po2_model = materialize_model(qat_model, quantized=True).to(device)
         master_report = language_report(master_model, val_tokens, block_size, batch_size, device, config.seed + 10)
         po2_report = language_report(po2_model, val_tokens, block_size, batch_size, device, config.seed + 10)
 
-    run_dir = config.output_dir / config.model
+    run_dir = resolve_run_dir(config.output_dir, config.model)
     evaluations = {
         "initial_fp32": initial_report,
         "qat_master_fp32": master_report,

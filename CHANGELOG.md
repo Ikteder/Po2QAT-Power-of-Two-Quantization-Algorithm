@@ -4,6 +4,20 @@ All notable changes to this teaching project are documented here.
 
 ## [Unreleased]
 
+## [1.2.0] - 2026-10-08
+
+### Added
+
+- Single-device TPU support through PyTorch/XLA, including a Colab setup path and explicit `tpu`/`xla` device aliases.
+
+### Changed
+
+- Linux setup installs a matched PyTorch 2.11/torchvision 0.26 wheel pair from one index; Colab TPU uses the matched PyTorch/XLA 2.9 stack.
+- Output-directory resolution no longer repeats the model name when given a path such as `runs/cnn`.
+- The Colab notebook separates the output root from the model-specific artifact directory.
+
+## [1.1.0] - 2026-09-23
+
 ### Added
 
 - CIFAR-adapted VGG19 and ResNet50 model options with automatic conservative batch sizing.
