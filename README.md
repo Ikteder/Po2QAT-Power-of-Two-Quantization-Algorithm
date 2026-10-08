@@ -351,12 +351,6 @@ The forward value is Po2, while the derivative with respect to `fp_weight` is on
 
 **Windows creates DataLoader errors** — leave `--workers 0` (the default).
 
-## Student assignment
-
-Use the [Po2QAT assignment worksheet](docs/assignments/PO2QAT_ASSIGNMENT.md) for the full procedure, ten analysis questions, submission checklist, and 40-point grading rubric.
-
-See [docs/INSTRUCTOR_GUIDE.md](docs/INSTRUCTOR_GUIDE.md) for grading prompts and [docs/experiments/EXPERIMENT_TEMPLATE.md](docs/experiments/EXPERIMENT_TEMPLATE.md) for a report template.
-
 ## Reference
 
 - Ikteder Akhand Udoy and Omiya Hassan, [Multiplier-Free LLM Linear Layers via Weights-Only Power-of-Two QAT](https://doi.org/10.1109/ICAD69378.2026.11609079), IEEE International Conference on AI and Data Analytics, 2026.
